@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+  <link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+  <meta content="yes" name="apple-mobile-web-app-capable"/>
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+  <meta content="#1f334d" name="theme-color"/>
+  <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport"/>
+  <title>Biblioteca Jurídica – ANF</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #1f334d;
+      --accent: #e63946;
+      --bg: #f5f7fa;
+      --text: #333;
+      --card-bg: #fff;
+      --radius: 12px;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 1rem;
+      z-index: 100;
+    }
+    
+    /* Versión compacta del header para el modo de documento */
+    header.compact {
+      padding: 0.3rem 0.5rem;
+    }
+
+    .title-bar {
+      display: flex;
+      align-items: center;
+    }
+
+    .title-bar h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+      flex: 1;
+    }
+    
+    /* Título más pequeño en el modo documento */
+    header.compact .title-bar h1 {
+      font-size: 1.1rem;
+    }
+
+    .search-bar {
+      background: #fff;
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+    
+    /* Ocultar búsqueda en modo documento */
+    header.compact .search-bar {
+      display: flex;
+    }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      flex: 1;
+      font-size: 1rem;
+      padding: 0.25rem;
+      outline: none;
+    }
+
+    .search-icon {
+      color: #666;
+      margin-right: 0.5rem;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: #e8ebf0;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    /* Barra de herramientas compacta para modo documento */
+    .toolbar.compact {
+      padding: 0.25rem 0.75rem;
+    }
+
+    .toolbar.hidden {
+      display: none;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+    
+    /* Botones más pequeños en modo documento */
+    .toolbar.compact .btn {
+      width: 30px;
+      height: 30px;
+      font-size: 0.85rem;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .view-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+    
+    /* Contenedor sin padding superior en modo documento */
+    .container.doc-mode {
+      padding-top: 0;
+    }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .doc-item {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.25rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: var(--shadow);
+      border-top: 4px solid var(--primary);
+      touch-action: manipulation;
+    }
+
+    .doc-item:active {
+      transform: scale(0.98);
+    }
+
+    .doc-icon {
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    .doc-title {
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
+
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .doc-list .doc-item {
+      flex-direction: row;
+      justify-content: flex-start;
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    .doc-list .doc-icon {
+      font-size: 1.5rem;
+    }
+
+    .doc-list .doc-title {
+      text-align: left;
+    }
+
+    #viewer {
+      padding: 1rem;
+      flex: 1;
+      overflow-y: auto;
+      background: #fff;
+      line-height: 1.5;
+      zoom: 1; /* Valor de zoom inicial */
+     }
+
+    #viewer h1 {
+      font-size: 1.4rem;
+      margin: 1rem 0;
+    }
+
+    #viewer h2 {
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+
+    .highlight {
+      background: #ffe169;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .search-results {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      border-radius: 50px;
+      color: white;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      display: none;
+    }
+
+    .search-results button {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Título del documento en la barra superior */
+    .doc-header-title {
+      margin-left: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #1f334d;
+        --bg: #121212;
+        --text: #eee; 
+        --card-bg: #1e1e1e;
+      }
+      
+      .search-bar {
+        background: #333;
+      }
+      
+      .search-bar input {
+        color: #fff;
+      }
+      
+      .toolbar {
+        background: #222;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      
+      .btn {
+        background: rgba(0,0,0,0.3);
+        color: #eee;
+      }
+      
+      #viewer {
+        background: #1e1e1e;
+        color: #eee;
+      }
+      
+      .highlight {
+        background: #6d5a00;
+        color: #fff;
+      }
+    }
+  
+    @media screen and (max-width: 480px) {
+      #viewer {
+        padding: 0.5rem !important;
+        font-size: 0.95rem;
+      }
+
+      .toolbar.compact .btn {
+        width: 28px;
+        height: 28px;
+      }
+
+      .doc-header-title {
+        font-size: 0.8rem;
+      }
+    }
+  
+    .doc-item.calculadora {
+      border-top: 4px solid #2a5d68;
+      background: #f1f6f5;
+    }
+
+  </style>
+</head>
+<body>
+  <header id="main-header">
+    <div class="title-bar">
+      <h1>Biblioteca Jurídica</h1>
+      <span id="doc-title-header" class="doc-header-title"></span>
+    </div>
+    <div class="search-bar">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input id="search" type="text" placeholder="Buscar por título o contenido..." />
+    </div>
+  </header>
+
+  <div class="toolbar" id="view-toolbar">
+    <div class="view-btns">
+      <button class="btn active" id="grid-view-btn" title="Vista en cuadrícula">
+        <i class="fa-solid fa-table-cells"></i>
+      </button>
+      <button class="btn" id="list-view-btn" title="Vista en lista">
+        <i class="fa-solid fa-list"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar hidden" id="doc-toolbar">
+    <button class="btn" id="btn-back" title="Volver">
+      <i class="fa-solid fa-house"></i>
+    </button>
+    <div style="display:flex; gap:0.25rem;">
+      <button class="btn" id="btn-font-decrease" title="Reducir texto">
+        <i class="fa-solid fa-minus"></i>
+      </button>
+      <button class="btn" id="btn-font-increase" title="Aumentar texto">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="container" id="main-container">
+    <div class="doc-grid" id="docList"></div>
+    <div id="viewer" style="display:none;"></div>
+  </div>
+
+  <div class="search-results">
+    <button id="prev-result"><i class="fa-solid fa-chevron-up"></i></button>
+    <span id="result-counter">0 de 0</span>
+    <button id="next-result"><i class="fa-solid fa-chevron-down"></i></button>
+    <button id="close-search"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <script>
+    // Definición de documentos con sus propiedades
+    const docs = [
+
+      
+{ file: 'documento1.html', title: 'CÓDIGO PENAL', icon: 'fa-solid fa-gavel' },
+      { file: 'documento2.html', title: 'CÓDIGO PROCESAL PENAL', icon: 'fa-solid fa-scale-balanced' },
+      { file: 'documento3.html', title: 'LEY DE DROGAS', icon: 'fa-solid fa-pills' },
+      { file: 'documento4.html', title: 'LEY DE CONTROL DE ARMAS', icon: 'fa-solid fa-gun' },
+      { file: 'documento5.html', title: 'LEY DE PENAS SUSTITUTIVAS', icon: 'fa-solid fa-person-walking-arrow-right' },
+      { file: 'documento6.html', title: 'LEY DE VIOLENCIA INTRAFAMILIAR', icon: 'fa-solid fa-house-user' },
+      { file: 'documento7.html', title: 'LEY RPA', icon: 'fa-solid fa-child' },
+      { file: 'documento8.html', title: 'LEY RPA (Diferida)', icon: 'fa-solid fa-child-reaching' },
+      { file: 'documento9.html', title: 'LEY DE VIOLENCIA EN LOS ESTADIOS', icon: 'fa-solid fa-futbol' },
+      { file: 'documento10.html', title: 'LEY DE TRANSITO', icon: 'fa-solid fa-car' },
+      { file: 'documento11.html', title: 'LEY ORGANICA DEL MINISTERIO PUBLICO', icon: 'fa-solid fa-building-columns' },
+    { file: 'minutas.html', title: 'Minutas Jurisprudencia', icon: 'fa-solid fa-book-bookmark' },
+      { file: 'calculadora_abonos.html', title: 'Calculadora Abonos por Arresto', icon: 'fa-solid fa-calculator' },
+];
+
+    // Elementos DOM
+    const docList = document.getElementById('docList');
+    const viewer = document.getElementById('viewer');
+    const searchInput = document.getElementById('search');
+    const viewToolbar = document.getElementById('view-toolbar');
+    const docToolbar = document.getElementById('doc-toolbar');
+    const resultCounter = document.getElementById('result-counter');
+    const searchResults = document.querySelector('.search-results');
+    const mainHeader = document.getElementById('main-header');
+    const mainContainer = document.getElementById('main-container');
+    const docTitleHeader = document.getElementById('doc-title-header');
+    
+    // Variables para búsqueda
+    let highlights = [], currentHit = -1, lastTerm = '';
+    
+    // Construir la lista de documentos
+    function buildDocList() {
+      docList.innerHTML = '';
+      docs.forEach(doc => {
+        const card = document.createElement('div');
+        card.className = 'doc-item';
+        if (doc.title.includes('Calculadora')) card.classList.add('calculadora');
+        card.innerHTML = `
+          <div class="doc-icon"><i class="${doc.icon || 'fa-solid fa-book'}"></i></div>
+          <div class="doc-title">${doc.title}</div>`;
+        card.addEventListener('click', () => {
+          if (doc.file === 'minutas.html') {
+            window.location.href = doc.file;
+          } else {
+            openDoc(doc.file, doc.title);
+          }
+        });
+        docList.appendChild(card);
+      });
+    }
+
+    // Cargar un documento
+    async function loadDocument(file, title) {
+      try {
+        // Determinar ruta: si es minutas.html, cargar desde root, sino desde docs/
+        const url = file === 'minutas.html' ? file : ('docs/' + file);
+        const res = await fetch(url);
+        if (!res.ok) {
+          viewer.innerHTML = `<div class="error"><h2>Error ${res.status}</h2><p>No se pudo cargar el documento.</p></div>`;
+          return;
+        }
+        
+        const txt = await res.text();
+        
+        // Actualizar título del documento
+        document.title = `${title} - Biblioteca Jurídica ANF`;
+        
+        let html;
+        if (file.endsWith('.md')) {
+          html = marked.parse(txt);
+        } else {
+          const p = new DOMParser();
+          const docHtml = p.parseFromString(txt, 'text/html');
+          // Solo eliminamos estilos y enlaces si existen
+          if (docHtml.head) {
+            docHtml.head.querySelectorAll('style,link').forEach(e => e.remove());
+          }
+          html = docHtml.body ? docHtml.body.innerHTML : txt;
+        }
+        
+        viewer.innerHTML = html;
+        viewer.dataset.original = viewer.innerHTML;
+        
+        // Aplicar resaltado de sintaxis
+        hljs.highlightAll();
+        
+        // Restaurar tamaño de fuente guardado
+        const savedSize = localStorage.getItem('fontSize') || '16px';
+        viewer.style.fontSize = savedSize;
+
+        // Limpiar búsqueda
+        resetSearch();
+      } catch (err) {
+        console.error('Error cargando documento:', err);
+        viewer.innerHTML = `<div class="error"><h2>Error</h2><p>${err.message}</p></div>`;
+      }
+    }
+
+    // Abrir un documento
+    function openDoc(file, title) {
+      // Cambiar a vista documento
+      docList.style.display = 'none';
+      viewer.style.display = 'block';
+      
+      // Cambiar barras de herramientas
+      viewToolbar.classList.add('hidden');
+      docToolbar.classList.remove('hidden');
+      docToolbar.classList.add('compact');
+      
+      // Cambiar el aspecto del header para modo documento
+      mainHeader.classList.add('compact');
+      mainContainer.classList.add('doc-mode');
+      
+      // Mostrar título del documento en el header
+      docTitleHeader.textContent = title;
+      
+      // Cargar documento
+      loadDocument(file, title);
+    }
+
+    // Volver al inicio
+    function goHome() {
+      // Actualizar título
+      document.title = 'Biblioteca Jurídica – ANF';
+      
+      // Cambiar a vista de lista
+      viewer.style.display = 'none';
+      docList.style.display = 'grid';
+      
+      // Cambiar barras de herramientas
+      docToolbar.classList.add('hidden');
+      docToolbar.classList.remove('compact');
+      viewToolbar.classList.remove('hidden');
+      
+      // Restaurar header y container
+      mainHeader.classList.remove('compact');
+      mainContainer.classList.remove('doc-mode');
+      
+      // Limpiar título del documento en header
+      docTitleHeader.textContent = '';
+      
+      // Limpiar búsqueda
+      searchInput.value = '';
+      searchResults.style.display = 'none';
+    }
+
+    // Función para resaltar términos de búsqueda
+    function highlightTerm(root, term) {
+      if (!term.trim()) return;
+      
+      const rx = new RegExp(`(${escapeRx(term)})`, 'gi');
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      
+      nodes.forEach(n => {
+        const val = n.nodeValue;
+        if (!rx.test(val)) return;
+        
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        
+        val.replace(rx, (m, _, off) => {
+          if (off > last) frag.appendChild(document.createTextNode(val.slice(last, off)));
+          const span = document.createElement('span');
+          span.className = 'highlight';
+          span.textContent = m;
+          frag.appendChild(span);
+          last = off + m.length;
+        });
+        
+        if (last < val.length) frag.appendChild(document.createTextNode(val.slice(last)));
+        n.parentNode.replaceChild(frag, n);
+      });
+    }
+
+    // Desplazarse al resultado de búsqueda
+    function scrollToHit(idx) {
+      if (!highlights.length) return;
+      
+      currentHit = (idx + highlights.length) % highlights.length;
+      highlights[currentHit].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Actualizar contador de resultados
+      resultCounter.textContent = `${currentHit + 1} de ${highlights.length}`;
+    }
+
+    // Buscar en documento
+    function doSearch() {
+      const term = searchInput.value.trim();
+      
+      if (!term) {
+        resetSearch();
+        return;
+      }
+      
+      // Si estamos en vista de lista, filtrar documentos
+      if (viewer.style.display !== 'block') {
+        filterDocuments(term);
+        return;
+      }
+      
+      // Si es la misma búsqueda, avanzar al siguiente resultado
+      if (term === lastTerm && highlights.length) {
+        scrollToHit(currentHit + 1);
+        return;
+      }
+      
+      // Nueva búsqueda
+      lastTerm = term;
+      viewer.innerHTML = viewer.dataset.original;
+      highlightTerm(viewer, term);
+      highlights = [...viewer.querySelectorAll('.highlight')];
+      
+      // Mostrar panel de resultados si hay coincidencias
+      if (highlights.length) {
+        searchResults.style.display = 'flex';
+        scrollToHit(0);
+      } else {
+        searchResults.style.display = 'none';
+        resultCounter.textContent = '0 de 0';
+      }
+    }
+
+    // Filtrar documentos en la lista
+    function filterDocuments(term) {
+      const lowerTerm = term.toLowerCase();
+      const items = docList.querySelectorAll('.doc-item');
+      let visibleCount = 0;
+      
+      items.forEach(item => {
+        const title = item.querySelector('.doc-title').textContent.toLowerCase();
+        if (title.includes(lowerTerm)) {
+          item.style.display = '';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      
+      // Mostrar mensaje si no hay resultados
+      if (visibleCount === 0 && docList.querySelector('.no-results') === null) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.innerHTML = `<p style="text-align:center;padding:1rem;">No se encontraron documentos que coincidan con "${term}"</p>`;
+        docList.appendChild(noResults);
+      } else if (visibleCount > 0) {
+        const noResults = docList.querySelector('.no-results');
+        if (noResults) noResults.remove();
+      }
+    }
+
+    // Restablecer búsqueda
+    function resetSearch() {
+      highlights = [];
+      currentHit = -1;
+      lastTerm = '';
+      searchResults.style.display = 'none';
+    }
+
+    // Cambiar entre vista de cuadrícula y lista
+    function toggleView(type) {
+      const gridBtn = document.getElementById('grid-view-btn');
+      const listBtn = document.getElementById('list-view-btn');
+      
+      if (type === 'grid') {
+        docList.className = 'doc-grid';
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        localStorage.setItem('viewMode', 'grid');
+      } else {
+        docList.className = 'doc-list';
+        listBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+        localStorage.setItem('viewMode', 'list');
+      }
+    }
+
+    // Cambiar tamaño de fuente
+      function changeFont(change) {
+      const currentSize = parseFloat(getComputedStyle(viewer).fontSize);
+      const newSize = Math.max(12, Math.min(24, currentSize + change));
+      viewer.style.fontSize = newSize + 'px';
+      localStorage.setItem('fontSize', viewer.style.fontSize);
+    }
+
+    // Función para escapar caracteres especiales en regex
+    const escapeRx = s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+    // Event listeners
+    document.getElementById('btn-back').addEventListener('click', goHome);
+    document.getElementById('btn-font-increase').addEventListener('click', () => changeFont(1));
+    document.getElementById('btn-font-decrease').addEventListener('click', () => changeFont(-1));
+    document.getElementById('grid-view-btn').addEventListener('click', () => toggleView('grid'));
+    document.getElementById('list-view-btn').addEventListener('click', () => toggleView('list'));
+    document.getElementById('prev-result').addEventListener('click', () => scrollToHit(currentHit - 1));
+    document.getElementById('next-result').addEventListener('click', () => scrollToHit(currentHit + 1));
+    document.getElementById('close-search').addEventListener('click', () => {
+      searchInput.value = '';
+      resetSearch();
+      if (viewer.dataset.original) {
+        viewer.innerHTML = viewer.dataset.original;
+      }
+    });
+    
+    // Búsqueda en tiempo real
+    searchInput.addEventListener('input', () => {
+      // Ejecutar búsqueda después de 300ms de inactividad
+      clearTimeout(searchInput.timeout);
+      searchInput.timeout = setTimeout(doSearch, 300);
+    });
+    
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        clearTimeout(searchInput.timeout);
+        doSearch();
+      }
+    });
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      buildDocList();
+      
+      // Restaurar modo de vista
+      const savedView = localStorage.getItem('viewMode');
+      if (savedView === 'list') {
+        toggleView('list');
+      }
+      
+      // Registrar Service Worker si está disponible
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .catch(err => console.error('Error al registrar Service Worker:', err));
+      }
+
+      // Asegurarse de que empezamos en la vista de inicio
+      goHome();
+    });
+  </script>
+</body>
+</html>

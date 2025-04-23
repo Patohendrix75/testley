@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+  <link href="apple-touch-icon.png" rel="apple-touch-icon"/>
+  <meta content="yes" name="apple-mobile-web-app-capable"/>
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+  <meta content="#1f334d" name="theme-color"/>
+  <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport"/>
+  <title>Biblioteca Jurídica – ANF</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root { 
+      --primary:#1f334d;
+      --bg:#f5f7fa;
+      --text:#333;
+      --card-bg:#fff;
+      --radius:12px;
+      --shadow:0 2px 10px rgba(0,0,0,0.08); 
+    }
+    
+    * {
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+    
+    body {
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Ubuntu,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      flex-direction:column;
+      height:100vh;
+      overflow:hidden;
+    }
+    
+    header {
+      background:var(--primary);
+      color:#fff;
+      padding:1rem;
+      display:flex;
+      flex-direction:column;
+      z-index:100;
+    }
+    
+    header .title-bar {
+      display:flex;
+      align-items:center;
+    }
+    
+    header h1 {
+      font-size:1.4rem;
+      margin:0;
+      flex:1;
+    }
+    
+    header .home-btn {
+      color:#fff;
+      background:rgba(255,255,255,0.2);
+      border:none;
+      border-radius:var(--radius);
+      padding:0.4rem 0.8rem;
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+      cursor:pointer;
+      font-size:0.9rem;
+    }
+    
+    header .home-btn:hover {
+      background:rgba(255,255,255,0.3);
+    }
+    
+    /* Header compacto para modo standalone */
+    header.compact {
+      padding: 0.3rem 0.5rem;
+    }
+    
+    header.compact h1 {
+      font-size: 1.1rem;
+    }
+    
+    .toolbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:#e8ebf0;
+      padding:0.75rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    /* Barra de herramientas compacta para modo standalone */
+    .toolbar.compact {
+      padding: 0.25rem 0.75rem;
+    }
+    
+    .view-btns button {
+      background:rgba(255,255,255,0.8);
+      border:none;
+      border-radius:50%;
+      width:36px;
+      height:36px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:var(--shadow);
+      color:var(--primary);
+      margin-right:0.5rem;
+      cursor:pointer;
+    }
+    
+    .view-btns button.active {
+      background:var(--primary);
+      color:#fff;
+    }
+    
+    .toolbar.compact .view-btns button {
+      width: 30px;
+      height: 30px;
+      font-size: 0.85rem;
+    }
+    
+    select.cat-filter {
+      flex:1;
+      padding:0.5rem 1rem;
+      border:1px solid #ccc;
+      border-radius:var(--radius);
+      font-size:0.95rem;
+      margin-right:1rem;
+      box-shadow:var(--shadow);
+    }
+    
+    main {
+      flex:1;
+      overflow-y:auto;
+      padding:0.75rem;
+      position:relative;
+    }
+    
+    /* Container sin padding superior en modo documento */
+    main.doc-mode {
+      padding-top: 0;
+    }
+    
+    .doc-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:0.75rem;
+    }
+    
+    .doc-list {
+      display:flex;
+      flex-direction:column;
+      gap:0.5rem;
+    }
+    
+    .doc-item {
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:1.25rem 0.75rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      box-shadow:var(--shadow);
+      border-top:4px solid var(--primary);
+      cursor:pointer;
+      transition:transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .doc-item:hover {
+      transform:translateY(-3px);
+      box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .doc-icon {
+      font-size:2rem;
+      color:var(--primary);
+      margin-bottom:0.75rem;
+    }
+    
+    .doc-title {
+      font-weight:600;
+      text-align:center;
+      font-size:0.9rem;
+      line-height:1.3;
+    }
+    
+    .doc-category {
+      font-size:0.8rem;
+      color:#666;
+      margin-top:0.5rem;
+      text-align:center;
+    }
+    
+    #minutas-viewer {
+      display:none;
+      background:#fff;
+      padding:1rem;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow-y:auto;
+      height:100%;
+    }
+    
+    .back-btn {
+      position:absolute;
+      top:1rem;
+      right:1rem;
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:50%;
+      width:40px;
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      z-index:10;
+    }
+    
+    .back-btn:hover {
+      background:#2a4360;
+    }
+    
+    .loading-overlay {
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      background:rgba(255,255,255,0.8);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+      display:none;
+    }
+    
+    .loading-spinner {
+      border:4px solid rgba(0,0,0,0.1);
+      border-left:4px solid var(--primary);
+      border-radius:50%;
+      width:40px;
+      height:40px;
+      animation:spin 1s linear infinite;
+      margin-bottom:1rem;
+    }
+    
+    .error-message {
+      background:#fff;
+      border-left:4px solid #ff4136;
+      padding:1rem;
+      border-radius:var(--radius);
+      margin:1rem 0;
+      display:none;
+    }
+    
+    .no-results {
+      text-align:center;
+      padding:2rem;
+      font-size:1.1rem;
+      color:#666;
+    }
+    
+    @keyframes spin {
+      0% {transform:rotate(0deg);}
+      100% {transform:rotate(360deg);}
+    }
+    
+    /* Ajustes mejorados para modo standalone/PWA */
+    body.standalone header {
+      padding-top: env(safe-area-inset-top);
+    }
+    
+    body.standalone .toolbar {
+      margin-top: 0;
+    }
+    
+    body.standalone {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Modo oscuro */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121212;
+        --text: #eee; 
+        --card-bg: #1e1e1e;
+      }
+      
+      .toolbar {
+        background: #222;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      
+      #minutas-viewer {
+        background: #1e1e1e;
+        color: #eee;
+      }
+      
+      .loading-overlay {
+        background: rgba(0,0,0,0.7);
+        color: white;
+      }
+      
+      .error-message {
+        background: #1e1e1e;
+        color: #eee;
+      }
+    }
+    
+    /* Ajustes para pantallas pequeñas */
+    @media screen and (max-width: 480px) {
+      #minutas-viewer {
+        padding: 0.5rem;
+        font-size: 0.95rem;
+      }
+      
+      .toolbar.compact .view-btns button {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header id="main-header">
+    <div class="title-bar">
+      <h1>Minutas de Jurisprudencia</h1>
+      <button id="home-btn" class="home-btn"><i class="fa-solid fa-house"></i> Inicio</button>
+    </div>
+  </header>
+  
+  <div class="toolbar" id="main-toolbar">
+    <select id="minutas-catFilter" class="cat-filter">
+      <option value="all">Todas las categorías</option>
+      <option value="Control de Identidad">Control de Identidad</option>
+      <option value="Detención y Aprehensión">Detención y Aprehensión</option>
+      <option value="Diligencias e Investigación">Diligencias e Investigación</option>
+      <option value="Evidencia y Cadena de Custodia">Evidencia y Cadena de Custodia</option>
+      <option value="Procedimiento y Garantías">Procedimiento y Garantías</option>
+      <option value="Delitos y Tipicidad">Delitos y Tipicidad</option>
+    </select>
+    <div class="view-btns">
+      <button id="minutas-grid-btn" class="active" title="Vista en cuadrícula"><i class="fa-solid fa-table-cells"></i></button>
+      <button id="minutas-list-btn" title="Vista en lista"><i class="fa-solid fa-list"></i></button>
+    </div>
+  </div>
+  
+  <main id="main-container">
+    <div id="minutas-docList" class="doc-grid"></div>
+    <div id="minutas-viewer"></div>
+    <button id="back-btn" class="back-btn" style="display:none;"><i class="fa-solid fa-arrow-left"></i></button>
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Cargando documento...</p>
+    </div>
+    <div class="error-message" id="error-message">
+      <h3>Error al cargar el documento</h3>
+      <p>No se ha podido cargar el documento solicitado. Por favor, intente nuevamente más tarde.</p>
+    </div>
+  </main>
+  
+  <script>
+  (function(){
+    // Verificar si se está ejecutando en modo standalone/PWA
+    function checkStandalone() {
+      if (window.matchMedia('(display-mode: standalone)').matches || 
+          window.navigator.standalone === true) {
+        document.body.classList.add('standalone');
+        
+        // Agregar clases compactas en modo standalone
+        document.getElementById('main-header').classList.add('compact');
+        document.getElementById('main-toolbar').classList.add('compact');
+      }
+    }
+    
+    // Verificar al cargar y cuando cambie el estado
+    checkStandalone();
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+
+    // Metadatos de las minutas con sus categorías
+    let docs = [];
+
+    // Referencias a elementos del DOM
+    const docListEl = document.getElementById('minutas-docList');
+    const viewerEl = document.getElementById('minutas-viewer');
+    const gridBtn = document.getElementById('minutas-grid-btn');
+    const listBtn = document.getElementById('minutas-list-btn');
+    const filterEl = document.getElementById('minutas-catFilter');
+    const backBtn = document.getElementById('back-btn');
+    const homeBtn = document.getElementById('home-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const errorMessage = document.getElementById('error-message');
+    const mainContainer = document.getElementById('main-container');
+
+    // Variables globales
+    let currentDocument = null;
+    let appState = 'home'; // Puede ser 'home' o 'viewer'
+
+    async function fetchDocumentList() {
+      docs = [
+        { path: 'minutas/2_CONTROL_DE_IDENTIDAD-LEY_DE_TRANSITO_C.md', title: 'N° 2 CONTROL DE IDENTIDAD-LEY DE TRÁNSITO C', category: 'Control de Identidad' },
+        { path: 'minutas/3_ACCESO_A_INFORMACION_EN_FACEBOOK.md', title: 'N° 3 ACCESO A INFORMACIÓN EN FACEBOOK', category: 'Diligencias e Investigación' },
+        { path: 'minutas/N°_4_PRUEBA_POSTERIOR_AL_CIERRE.md', title: 'N° 4 PRUEBA POSTERIOR AL CIERRE', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_5_ARTICULO_195_LEY_18290.md', title: 'N° 5 ARTICULO 195 LEY 18290', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_6_REVISIÓN_DE_CELULARES.md', title: 'N° 6 REVISIÓN DE CELULARES', category: 'Diligencias e Investigación' },
+        { path: 'minutas/N°_7_PRIMERAS_DILIGENCIAS_Y_GPS.md', title: 'N° 7 PRIMERAS DILIGENCIAS Y GPS', category: 'Diligencias e Investigación' },
+        { path: 'minutas/N°_8_EFECTO_DE_LA_APELACIÓN_DE_LA_REVOCACIÓN_DE_PENA_SUSTITUTIVA.md', title: 'N° 8 EFECTO DE LA APELACIÓN DE LA REVOCACIÓN DE PENA SUSTITUTIVA', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_10_COAUTORIA_EN_PORTE_O_TENENCIA_DE_ARMAS.md', title: 'N° 10 COAUTORIA EN PORTE O TENENCIA DE ARMAS', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_11_INTERNACION_PROVISIONAL_PREVIA_AL_INFORME_SIQUIATRICO.md', title: 'N° 11 INTERNACION PROVISIONAL PREVIA AL INFORME SIQUIATRICO', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_12_TESTIGOS_NECESIDAD_DE_UNA_DECLARACIÓN_PREVIA.md', title: 'N° 12 TESTIGOS NECESIDAD DE UNA DECLARACIÓN PREVIA', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_13_CONTROL_DE_IDENTIDAD_(ARROJAR_OBJETO).md', title: 'N° 13 CONTROL DE IDENTIDAD (ARROJAR OBJETO)', category: 'Control de Identidad' },
+        { path: 'minutas/N°_14_JUICIOS_POR_VIDEOCONFERENCIA_(RECLAMOS_CONCRETOS).md', title: 'N° 14 JUICIOS POR VIDEOCONFERENCIA (RECLAMOS CONCRETOS)', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_15_CONTROL_DE_IDENTIDAD_Y_DENUNCIA_ANÓNIMA.md', title: 'N° 15 CONTROL DE IDENTIDAD Y DENUNCIA ANÓNIMA', category: 'Control de Identidad' },
+        { path: 'minutas/N°_16__DETENCION_POR_GUARDIAS_DE_SEGURIDAD_O_MUNICIPALES.md', title: 'N° 16 DETENCION POR GUARDIAS DE SEGURIDAD O MUNICIPALES', category: 'Detención y Aprehensión' },
+        { path: 'minutas/N°_17_DOLO_EVENTUAL_Y_DELITOS_TENTADOS_O_FRUSTRADOS.md', title: 'N° 17 DOLO EVENTUAL Y DELITOS TENTADOS O FRUSTRADOS', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_18_DETENCION_POR_PARTICULARES.md', title: 'N° 18 DETENCION POR PARTICULARES', category: 'Detención y Aprehensión' },
+        { path: 'minutas/N°_19_CONTROL_DE_IDENTIDAD_PREVENTIVO_QUE_MUTA_A_INVESTIGATIVO.md', title: 'N° 19 CONTROL DE IDENTIDAD PREVENTIVO QUE MUTA A INVESTIGATIVO', category: 'Control de Identidad' },
+        { path: 'minutas/N°_20_CADENA_DE_CUSTODIA_Y_DEBIDO_PROCESO.md', title: 'N° 20 CADENA DE CUSTODIA Y DEBIDO PROCESO', category: 'Evidencia y Cadena de Custodia' },
+        { path: 'minutas/N°_21_CONTROL_IDENTIDAD_OLOR_MARIHUANA.md', title: 'N° 21 CONTROL IDENTIDAD OLOR MARIHUANA', category: 'Control de Identidad' },
+        { path: 'minutas/N°_22_CONTROL_IDENTIDAD_Y_HUIDA.md', title: 'N° 22 CONTROL IDENTIDAD Y HUIDA', category: 'Control de Identidad' },
+        { path: 'minutas/N°_23_CONTROL_IDENTIDAD_Y_CAN_DETECTOR_DE_DROGAS.md', title: 'N° 23 CONTROL IDENTIDAD Y CAN DETECTOR DE DROGAS', category: 'Control de Identidad' },
+        { path: 'minutas/N°_24_Reclamos_por_infracción_de_garantías_de_terceros.md', title: 'N° 24 Reclamos por infracción de garantías de terceros', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_25_Porte_o_tenencia_de_una_munición.md', title: 'N° 25 Porte o tenencia de una munición', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_26_Delito_continuado_-_reiterado.md', title: 'N° 26 Delito continuado - reiterado', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_26-Delito-continuado-reiterado_.md', title: 'N° 26-Delito-continuado-reiterado', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_27_Control_de_identidad_-_Transacción_en_la_vía_pública.md', title: 'N° 27 Control de identidad - Transacción en la vía pública', category: 'Control de Identidad' },
+        { path: 'minutas/N°_28_Obligatoriedad_del_artículo_302_del_CPP_durante_la_etapa_investigativa.md', title: 'N° 28 Obligatoriedad del artículo 302 del CPP durante la etapa investigativa', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_29_Abuso_sexual_-_Introducción_de_dedos.md', title: 'N° 29 Abuso sexual - Introducción de dedos', category: 'Delitos y Tipicidad' },
+        { path: 'minutas/N°_30_Actuaciones_autónomas_de_Carabineros_en_marchas_y_manifestaciones.md', title: 'N° 30 Actuaciones autónomas de Carabineros en marchas y manifestaciones', category: 'Diligencias e Investigación' },
+        { path: 'minutas/N°_31_Retractación_Víctima_331_letra_f)_CPP.md', title: 'N° 31 Retractación Víctima 331 letra f) CPP', category: 'Procedimiento y Garantías' },
+        { path: 'minutas/N°_32_Instrucción_sobre_primeras_diligencias.md', title: 'N° 32 Instrucción sobre primeras diligencias', category: 'Diligencias e Investigación' }
+      ];
+    }
+    
+    function renderDocuments() {
+      docListEl.innerHTML = '';
+      const selectedCategory = filterEl.value;
+      fetchDocumentList();
+      
+      // Filtrar por categoría seleccionada
+      const filteredDocs = selectedCategory === 'all' 
+        ? docs 
+        : docs.filter(doc => doc.category === selectedCategory);
+
+      // Si no hay documentos, mostrar mensaje
+      if (filteredDocs.length === 0) {
+        docListEl.innerHTML = '<div class="no-results">No se encontraron documentos en esta categoría.</div>';
+        return;
+      }
+      
+      // Crear tarjetas para cada documento
+      filteredDocs.forEach(doc => {
+        const card = document.createElement('div');
+        card.className = 'doc-item';
+        card.innerHTML = `
+          <div class="doc-icon"><i class="fa-solid fa-file-lines"></i></div>
+          <div class="doc-title">${doc.title}</div>
+          <div class="doc-category">${doc.category}</div>
+        `;
+        card.addEventListener('click', () => openDocument(doc));
+        docListEl.appendChild(card);
+      });
+      
+      // Aplicar modo de vista (cuadrícula o lista)
+      applyViewMode();
+    }
+
+    // Cambia entre vista de cuadrícula y lista
+    function applyViewMode() {
+      docListEl.className = gridBtn.classList.contains('active') ? 'doc-grid' : 'doc-list';
+    }
+
+    // Abre un documento para su visualización
+    async function openDocument(doc) {
+      try {
+        // Cambia el estado y muestra la pantalla de carga
+        appState = 'viewer';
+        currentDocument = doc;
+        docListEl.style.display = 'none';
+        viewerEl.style.display = 'block';
+        backBtn.style.display = 'flex';
+        loadingOverlay.style.display = 'flex';
+        errorMessage.style.display = 'none';
+        
+        // Añadir clase doc-mode al contenedor principal
+        mainContainer.classList.add('doc-mode');
+        
+        // Intenta cargar el documento
+        const response = await fetch(encodeURI(doc.path));
+        
+        // Verifica si la respuesta fue exitosa
+        if (!response.ok) {
+          throw new Error(`Error al cargar: ${response.status} ${response.statusText}`);
+        }
+        
+        // Procesa el contenido del documento
+        const markdownText = await response.text();
+        const htmlContent = marked.parse(markdownText);
+        
+        // Actualiza el visor
+        viewerEl.innerHTML = `<h1>${doc.title}</h1>${htmlContent}`;
+        viewerEl.dataset.original = viewerEl.innerHTML;
+        
+        // Aplica resaltado de sintaxis si está disponible
+        if (window.hljs) {
+          window.hljs.highlightAll();
+        }
+      } catch (error) {
+        console.error('Error al cargar el documento:', error);
+        errorMessage.style.display = 'block';
+      } finally {
+        loadingOverlay.style.display = 'none';
+      }
+    }
+
+    // Vuelve a la vista de inicio/lista de documentos
+    function goToHome() {
+      appState = 'home';
+      currentDocument = null;
+      docListEl.style.display = 'grid';
+      viewerEl.style.display = 'none';
+      backBtn.style.display = 'none';
+      errorMessage.style.display = 'none';
+      
+      // Quitar clase doc-mode del contenedor principal
+      mainContainer.classList.remove('doc-mode');
+      
+      // Restaura el modo de vista
+      applyViewMode();
+    }
+
+    // Configurar manejadores de eventos
+    function setupEventListeners() {
+      // Botones de navegación
+      backBtn.addEventListener('click', goToHome);
+      homeBtn.addEventListener('click', () => window.location.href = 'index.html');
+      
+      // Cambio de vista
+      gridBtn.addEventListener('click', () => {
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+        applyViewMode();
+      });
+      
+      listBtn.addEventListener('click', () => {
+        listBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+        applyViewMode();
+      });
+      
+      // Filtrado por categorías
+      filterEl.addEventListener('change', renderDocuments);
+      
+      // Teclas de atajo
+      document.addEventListener('keydown', (e) => {
+        // Escape para volver al inicio
+        if (e.key === 'Escape' && appState === 'viewer') {
+          goToHome();
+        }
+      });
+    }
+
+    // Inicialización
+    function init() {
+      setupEventListeners();
+      renderDocuments();
+    }
+
+    // Ejecutar cuando el DOM esté completamente cargado
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>
